@@ -1,7 +1,12 @@
 var express = require('express');
-var app = express();
+const mongoose = require("mongoose");
+const app = express();
 const bodyParser = require('body-parser');
 var cors = require('cors');
+const passport = require("passport");
+const users = require("./routes/api/users");
+
+
 
 app.use(bodyParser.urlencoded({ extended: false }));
 
@@ -12,7 +17,33 @@ app.use(cors());
 app.use(express.static(__dirname + '/public'));
 
 var liste = [];
+var massages = [];
 var lights = [false,false,false,false];
+
+
+const db = require("./config/keys").mongoURI;
+// Connect to MongoDB
+mongoose
+  .connect(
+    db,
+    { useNewUrlParser: true }
+  )
+  .then(() => console.log("MongoDB successfully connected"))
+  .catch(err => console.log(err));
+
+
+  // Passport middleware
+  app.use(passport.initialize());
+  // Passport config
+  require("./config/passport")(passport);
+  // Routes
+  app.use("/api/users", users);
+
+
+
+/*--------------------------------------------------------------------------------------------*/
+/*-----------------------------------------LIGHTS---------------------------------------------*/
+/*--------------------------------------------------------------------------------------------*/
 
 app.get('/lights', function (req, res) {
   res.json({
@@ -31,6 +62,10 @@ app.post('/toggleLights', function (req, res) {
   });
 });
 
+
+/*--------------------------------------------------------------------------------------------*/
+/*-----------------------------------------TODOS---------------------------------------------*/
+/*--------------------------------------------------------------------------------------------*/
 
 app.get('/todos', function (req, res) {
   res.json({
@@ -89,6 +124,38 @@ res.json({
 
 });
 
+/*--------------------------------------------------------------------------------------------*/
+/*-----------------------------------------CHAT---------------------------------------------*/
+/*--------------------------------------------------------------------------------------------*/
+
+
+app.get('/massages', function (req, res) {
+  res.json({
+    success: true,
+    massageList: massages
+  })
+});
+
+app.post('/addMassage', function (req, res) {
+  const postBody = req.body; // {title: "wäsche", user: "tim"}
+  console.log(postBody);
+
+
+  massages.push({
+    content: postBody.content,
+    user: postBody.user,
+    time: postBody.time
+  });
+
+  res.json({
+    success: true
+  });
+});
+
+
+/*--------------------------------------------------------------------------------------------*/
+/*-----------------------------------------LISTENER---------------------------------------------*/
+/*--------------------------------------------------------------------------------------------*/
 
 
 app.listen(80, function () {
